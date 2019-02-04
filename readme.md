@@ -50,7 +50,9 @@ What else needs to be done?
 setState right now is synchronous and updates the entire tree again
     - setState should be asynchronous (happen after e.g. handler code is done, otherwise we might be changing a component that no longer exists)
     - setState should only rerender a sub tree of the entire tree. So from the calling component down
-
+    - the rendering after setState should happen in LibGDX rendering thread, otherwise it will cause crashes
+        A way to dynamically assign thread for rerenders might be needed
+     
 Rendering children
     - Right now children are compared one by one when rendered. This is problematic however, because if they would be reordered after each rerender
     we will pass them wrong props (belonging to another element)
