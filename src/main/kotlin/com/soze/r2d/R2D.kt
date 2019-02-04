@@ -1,0 +1,256 @@
+package com.soze.lifegame.uibuilder
+
+import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.scenes.scene2d.Actor
+import com.badlogic.gdx.scenes.scene2d.Event
+import com.badlogic.gdx.scenes.scene2d.Group
+import com.badlogic.gdx.scenes.scene2d.InputEvent
+import com.badlogic.gdx.scenes.scene2d.ui.Label
+import com.badlogic.gdx.scenes.scene2d.ui.Table
+import com.badlogic.gdx.scenes.scene2d.ui.TextField
+import com.badlogic.gdx.utils.DelayedRemovalArray
+import java.lang.IllegalStateException
+import java.util.*
+import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
+import kotlin.reflect.full.primaryConstructor
+
+/**
+ * Renders R elements into a Scene2D structure.
+ */
+object R2D {
+
+  private var currentVDom: R2DNode = R2DNode("INITIAL", null, null, null, ArrayList())
+
+  private var stateChangeCallback: () -> Unit = fun() {}
+
+  fun render(element: Element, group: Group) {
+    val time0 = System.nanoTime()
+    println("first render")
+    val focus = group.stage?.keyboardFocus
+    R2D.stateChangeCallback = fun() {
+      println("stateChangeCallback called, re-rendering everything!")
+      render(element, group)
+    }
+    renderChild(currentVDom, element, group)
+
+    println(group)
+    group.stage?.keyboardFocus = focus
+    val totalTime = System.nanoTime() - time0
+    println("${TimeUnit.NANOSECONDS.toMillis(totalTime)} ms to render")
+  }
+
+  private fun renderChild(vdom: R2DNode, element: Element, group: Group) {
+    val type = element.type
+    var differentType = vdom.type != type
+    if (differentType) {
+      group.clearChildren()
+      vdom.children.clear()
+    }
+    vdom.type = type
+    if (type is String) {
+      renderStringType(vdom, element, group, differentType)
+    }
+    if (type is KClass<*> || type is Class<*>) {
+      renderComponentType(vdom, element, group, differentType)
+    }
+  }
+
+  private fun renderStringType(vdom: R2DNode, element: Element, group: Group, differentType: Boolean) {
+    val props = element.props
+    val actor = getActor(vdom, element, differentType)
+    vdom.actor = actor
+
+    if (group is Table) {
+      val row = props["row"] as Boolean? ?: false
+      if (row) {
+        val cells = group.cells
+        if (cells.size > 0) {
+          cells.get(cells.size - 1).row()
+        }
+      }
+      group.add(actor)
+    } else {
+      group.addActor(actor)
+    }
+    if (actor is Group) {
+      actor.clearChildren()
+      val children = props["children"] as List<Element>
+      val nextChildren: MutableList<R2DNode?> = ArrayList(children.size)
+      for (i in 0 until children.size) {
+        nextChildren.add(R2DNode("VOID", null, null, null, ArrayList()))
+      }
+      val previousChildren = vdom.children
+      children.forEachIndexed { index, element ->
+        var currentChild: R2DNode? = if (previousChildren.size > index) previousChildren[index] else null
+        var nextVdom: R2DNode?
+        //if current child is null, we are creating a new one
+        if (currentChild == null) {
+          nextVdom = R2DNode(element.type, null, null, vdom, ArrayList())
+        } else {
+          // a child was present already, we need to check if it's the same or different
+          val differentChildType = element.type != currentChild.type
+          //if type is the same
+          if (!differentChildType) {
+            nextVdom = currentChild
+          } else {
+            nextVdom = R2DNode(element.type, null, null, vdom, ArrayList())
+          }
+        }
+        nextChildren[index] = nextVdom
+        renderChild(nextVdom!!, element, actor)
+      }
+      vdom.children = nextChildren as MutableList<R2DNode>
+    }
+
+  }
+
+  private fun getActor(vdom: R2DNode, element: Element, differentType: Boolean): Actor {
+    if (!differentType && vdom.actor != null) {
+      return applyProps(element.props, vdom.actor!!)
+    }
+    return createActor(element.type as String, element.props)
+  }
+
+  private fun renderComponentType(vdom: R2DNode, element: Element, group: Group, differentType: Boolean) {
+    val component = getComponent(vdom, element, differentType)
+    component.stateChangeCallback = R2D.stateChangeCallback
+    val nextElement = component.render()
+    vdom.component = component
+    val nextVdom = getNextVdomComponent(vdom, nextElement, differentType)
+    vdom.children.clear()
+    vdom.children.add(nextVdom)
+    renderChild(nextVdom, nextElement, group)
+  }
+
+  private fun getComponent(vdom: R2DNode, element: Element, differentType: Boolean): Component {
+    if (!differentType && vdom.component != null) {
+      return vdom.component!!
+    }
+    return createComponent(element.type, element.props)
+  }
+
+  private fun getNextVdomComponent(vdom: R2DNode, nextElement: Element, differentType: Boolean): R2DNode {
+    if (!differentType && vdom.children.isNotEmpty()) {
+      return vdom.children[0]
+    }
+    return R2DNode(nextElement.type, null, null, vdom, ArrayList())
+  }
+
+  private fun createActor(type: String, props: UiState): Actor {
+    return when (type) {
+      "LABEL" -> createLabel(props)
+      "TABLE" -> createTable(props)
+      "TEXT_FIELD" -> createTextField(props)
+      "BUTTON" -> createButton(props)
+      else -> Table()
+    }
+  }
+
+  private fun createLabel(props: UiState): Actor {
+    val style = Label.LabelStyle(BitmapFont(), Color.WHITE)
+    return applyProps(props, Label(null, style))
+  }
+
+  private fun createTable(props: UiState): Actor {
+    return applyProps(props, Table())
+  }
+
+  private fun createTextField(props: UiState): Actor {
+    val style = TextField.TextFieldStyle()
+    style.font = BitmapFont()
+    return applyProps(props, TextField(null, style))
+  }
+
+  private fun applyProps(props: UiState, actor: Actor): Actor {
+    val clazz = actor::class.java
+    return when (clazz) {
+      Table::class.java -> applyProps(props, actor as Table)
+      TextField::class.java -> applyProps(props, actor as TextField)
+      Label::class.java -> applyProps(props, actor as Label)
+      else -> actor
+    }
+  }
+
+  private fun applyProps(props: UiState, table: Table): Table {
+    val onClick = props["onClick"] as ((event: Event) -> Boolean)?
+    onClick?.let {
+      val listener = fun(event: Event): Boolean {
+        if (event is InputEvent && event.type == InputEvent.Type.touchDown) {
+          return it(event)
+        }
+        return false
+      }
+      table.addListener(listener)
+    }
+    table.setFillParent(props["fillParent"] as Boolean? ?: false)
+    return table
+  }
+
+  private fun applyProps(props: UiState, textField: TextField): TextField {
+    val defaultStyle = TextField.TextFieldStyle()
+    defaultStyle.font = BitmapFont()
+    defaultStyle.fontColor = Color.WHITE
+    defaultStyle.cursor = NullDrawable()
+    defaultStyle.selection = NullDrawable()
+
+    val style = props["textFieldStyle"] as TextField.TextFieldStyle? ?: defaultStyle
+    val text = props["text"] as String? ?: ""
+    textField.text = text
+    textField.style = style
+
+//    val onChange = props["onChange"] as ((event: Event) -> Boolean)?
+    val onChange = props["onChange"] as ((field: TextField, char: Char) -> Unit)?
+    onChange?.let {
+      textField.setTextFieldListener(onChange)
+    }
+    return textField
+  }
+
+  private fun applyProps(props: UiState, label: Label): Label {
+    val defaultStyle = Label.LabelStyle()
+    defaultStyle.font = BitmapFont()
+    defaultStyle.fontColor = Color.WHITE
+    val text = props["text"] as String? ?: ""
+    val style = props["labelStyle"] as Label.LabelStyle? ?: defaultStyle
+    label.setText(text)
+    label.style = style
+    val disabled = props["disabled"] as Boolean? ?: false
+    if (disabled) {
+      style.fontColor = Color.GRAY
+    }
+    val onClick = props["onClick"] as ((event: Event) -> Boolean)?
+    if (label.listeners.size > 0) {
+      (label.listeners as DelayedRemovalArray).removeIndex(0)
+    }
+    onClick?.let {
+      label.addListener(fun(event: Event): Boolean {
+        if (!disabled && event is InputEvent && event.type == InputEvent.Type.touchDown) {
+          return onClick(event)
+        }
+        return false
+      })
+    }
+    return label
+  }
+
+  private fun createButton(props: UiState): Actor {
+    println("CREATING NON IMPLEMENTED BUTTON")
+    return Table()
+  }
+
+  private fun createComponent(clazz: Any, props: UiState): Component {
+    if (clazz is Class<*>) {
+      val declaredConstructor = clazz.getDeclaredConstructor(UiState::class.java)
+      return declaredConstructor.newInstance(props) as Component
+    }
+    if (clazz is KClass<*>) {
+      val primaryConstructor = clazz.primaryConstructor!!
+      return primaryConstructor.call(props) as Component
+    }
+    throw IllegalStateException("$clazz is not a class")
+  }
+
+
+}
