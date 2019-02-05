@@ -19,9 +19,10 @@ class App(props: UiState): Component(props) {
     
     private fun onLabelClick(event: Event): Boolean {
       setState("count" to (state["count"] + 1))
+      return true
     }
 
-    fun render(): Element {
+    override fun render(): Element {
       val count = state["count"].toString()
       val labelProps = UiState(
         "text" to count,
