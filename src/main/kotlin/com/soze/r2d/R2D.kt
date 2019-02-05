@@ -212,24 +212,23 @@ object R2D {
     if (disabled) {
       style.fontColor = Color.GRAY
     }
-    return label
-  }
-
-  private fun applyPropsActor(props: UiState, actor: Actor): Actor {
-    actor.name = props["name"] as String? ?: null
-    val disabled = props["disabled"] as Boolean? ?: false
     val onClick = props["onClick"] as ((event: Event) -> Boolean)?
-    if (actor.listeners.size > 0) {
-      (actor.listeners as DelayedRemovalArray).removeIndex(0)
+    if (label.listeners.size > 0) {
+      (label.listeners as DelayedRemovalArray).removeIndex(0)
     }
     onClick?.let {
-      actor.addListener(fun(event: Event): Boolean {
+      label.addListener(fun(event: Event): Boolean {
         if (!disabled && event is InputEvent && event.type == InputEvent.Type.touchDown) {
           return onClick(event)
         }
         return false
       })
     }
+    return label
+  }
+
+  private fun applyPropsActor(props: UiState, actor: Actor): Actor {
+    actor.name = props["name"] as String? ?: null
     return actor
   }
 
