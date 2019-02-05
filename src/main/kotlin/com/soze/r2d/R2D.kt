@@ -21,7 +21,7 @@ import kotlin.reflect.full.primaryConstructor
  */
 object R2D {
 
-  private var currentVDom: R2DNode = R2DNode("INITIAL", null, null, null, ArrayList())
+  private var currentVDom: R2DNode = R2DNode("INITIAL")
 
   private var stateChangeCallback: () -> Unit = fun() {}
 
@@ -42,6 +42,7 @@ object R2D {
   }
 
   private fun renderChild(vdom: R2DNode, element: Element, group: Group) {
+    vdom.group = group
     val type = element.type
     var differentType = vdom.type != type
     if (differentType) {
@@ -79,7 +80,7 @@ object R2D {
       val children = props["children"] as List<Element>
       val nextChildren: MutableList<R2DNode?> = ArrayList(children.size)
       for (i in 0 until children.size) {
-        nextChildren.add(R2DNode("VOID", null, null, null, ArrayList()))
+        nextChildren.add(R2DNode("VOID"))
       }
       val previousChildren = vdom.children
       children.forEachIndexed { index, element ->
@@ -87,7 +88,7 @@ object R2D {
         var nextVdom: R2DNode?
         //if current child is null, we are creating a new one
         if (currentChild == null) {
-          nextVdom = R2DNode(element.type, null, null, vdom, ArrayList())
+          nextVdom = R2DNode(type = element.type, parent = vdom)
         } else {
           // a child was present already, we need to check if it's the same or different
           val differentChildType = element.type != currentChild.type
@@ -95,7 +96,7 @@ object R2D {
           if (!differentChildType) {
             nextVdom = currentChild
           } else {
-            nextVdom = R2DNode(element.type, null, null, vdom, ArrayList())
+            nextVdom = R2DNode(type = element.type, parent = vdom)
           }
         }
         nextChildren[index] = nextVdom
@@ -135,7 +136,7 @@ object R2D {
     if (!differentType && vdom.children.isNotEmpty()) {
       return vdom.children[0]
     }
-    return R2DNode(nextElement.type, null, null, vdom, ArrayList())
+    return R2DNode(type = nextElement.type, parent = vdom)
   }
 
   private fun createActor(type: String, props: UiState): Actor {
