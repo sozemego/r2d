@@ -140,13 +140,14 @@ object R2D {
   }
 
   private fun createActor(type: String, props: UiState): Actor {
-    return when (type) {
+    val actor = when (type) {
       "LABEL" -> createLabel(props)
       "TABLE" -> createTable(props)
       "TEXT_FIELD" -> createTextField(props)
       "BUTTON" -> createButton(props)
       else -> Table()
     }
+    return applyPropsActor(props, actor)
   }
 
   private fun createLabel(props: UiState): Actor {
@@ -166,6 +167,7 @@ object R2D {
 
   private fun applyProps(props: UiState, actor: Actor): Actor {
     val clazz = actor::class.java
+    applyPropsActor(props, actor)
     return when (clazz) {
       Table::class.java -> applyProps(props, actor as Table)
       TextField::class.java -> applyProps(props, actor as TextField)
@@ -175,16 +177,6 @@ object R2D {
   }
 
   private fun applyProps(props: UiState, table: Table): Table {
-    val onClick = props["onClick"] as ((event: Event) -> Boolean)?
-    onClick?.let {
-      val listener = fun(event: Event): Boolean {
-        if (event is InputEvent && event.type == InputEvent.Type.touchDown) {
-          return it(event)
-        }
-        return false
-      }
-      table.addListener(listener)
-    }
     table.setFillParent(props["fillParent"] as Boolean? ?: false)
     return table
   }
@@ -201,7 +193,6 @@ object R2D {
     textField.text = text
     textField.style = style
 
-//    val onChange = props["onChange"] as ((event: Event) -> Boolean)?
     val onChange = props["onChange"] as ((field: TextField, char: Char) -> Unit)?
     onChange?.let {
       textField.setTextFieldListener(onChange)
@@ -221,19 +212,25 @@ object R2D {
     if (disabled) {
       style.fontColor = Color.GRAY
     }
+    return label
+  }
+
+  private fun applyPropsActor(props: UiState, actor: Actor): Actor {
+    actor.name = props["name"] as String? ?: null
+    val disabled = props["disabled"] as Boolean? ?: false
     val onClick = props["onClick"] as ((event: Event) -> Boolean)?
-    if (label.listeners.size > 0) {
-      (label.listeners as DelayedRemovalArray).removeIndex(0)
+    if (actor.listeners.size > 0) {
+      (actor.listeners as DelayedRemovalArray).removeIndex(0)
     }
     onClick?.let {
-      label.addListener(fun(event: Event): Boolean {
+      actor.addListener(fun(event: Event): Boolean {
         if (!disabled && event is InputEvent && event.type == InputEvent.Type.touchDown) {
           return onClick(event)
         }
         return false
       })
     }
-    return label
+    return actor
   }
 
   private fun createButton(props: UiState): Actor {
