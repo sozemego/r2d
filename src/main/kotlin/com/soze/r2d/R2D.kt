@@ -6,6 +6,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Event
 import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.InputEvent
+import com.badlogic.gdx.scenes.scene2d.ui.Cell
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.scenes.scene2d.ui.TextField
@@ -25,6 +26,11 @@ object R2D {
   private var currentVDom: R2DNode = R2DNode("INITIAL")
 
   private var stateChangeCallback: () -> Unit = fun() {}
+
+  fun com.badlogic.gdx.scenes.scene2d.ui.Table.lastCell(): Cell<*>? {
+    val cells = this.cells
+    return cells.get(cells.size - 1)
+  }
 
   fun render(element: Element, group: Group) {
     val time0 = System.nanoTime()
@@ -67,12 +73,14 @@ object R2D {
     if (group is Table) {
       val row = props["row"] as Boolean? ?: false
       if (row) {
-        val cells = group.cells
-        if (cells.size > 0) {
-          cells.get(cells.size - 1).row()
+        group.lastCell()?.let {
+          it.row()
         }
       }
-      group.add(actor)
+      group.add(actor).apply {
+        val colspan = props["colspan"] as Int? ?: 1
+        colspan(colspan)
+      }
     } else {
       group.addActor(actor)
     }
