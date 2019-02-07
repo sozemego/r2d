@@ -18,6 +18,11 @@ import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 
+fun com.badlogic.gdx.scenes.scene2d.ui.Table.lastCell(): Cell<*>? {
+  val cells = this.cells
+  return if (cells.size > 0) cells.get(cells.size - 1) else null
+}
+
 /**
  * Renders R elements into a Scene2D structure.
  */
@@ -26,11 +31,6 @@ object R2D {
   private var currentVDom: R2DNode = R2DNode("INITIAL")
 
   private var stateChangeCallback: () -> Unit = fun() {}
-
-  fun com.badlogic.gdx.scenes.scene2d.ui.Table.lastCell(): Cell<*>? {
-    val cells = this.cells
-    return cells.get(cells.size - 1)
-  }
 
   fun render(element: Element, group: Group) {
     val time0 = System.nanoTime()
