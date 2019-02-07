@@ -10,6 +10,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.badlogic.gdx.utils.DelayedRemovalArray
+import com.soze.r2d.DefaultCursor
 import java.lang.IllegalStateException
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -78,7 +79,7 @@ object R2D {
     if (actor is Group) {
       actor.clearChildren()
       val children = props["children"] as List<Element>
-      val nextChildren: MutableList<R2DNode?> = ArrayList(children.size)
+      val nextChildren: MutableList<R2DNode> = ArrayList(children.size)
       for (i in 0 until children.size) {
         nextChildren.add(R2DNode("VOID"))
       }
@@ -100,9 +101,9 @@ object R2D {
           }
         }
         nextChildren[index] = nextVdom
-        renderChild(nextVdom!!, element, actor)
+        renderChild(nextVdom, element, actor)
       }
-      vdom.children = nextChildren as MutableList<R2DNode>
+      vdom.children = nextChildren
     }
 
   }
@@ -185,8 +186,8 @@ object R2D {
     val defaultStyle = TextField.TextFieldStyle()
     defaultStyle.font = BitmapFont()
     defaultStyle.fontColor = Color.WHITE
-    defaultStyle.cursor = NullDrawable()
-    defaultStyle.selection = NullDrawable()
+    defaultStyle.cursor = DefaultCursor.get()
+    defaultStyle.selection = DefaultCursor.get()
 
     val style = props["textFieldStyle"] as TextField.TextFieldStyle? ?: defaultStyle
     val text = props["text"] as String? ?: ""
@@ -228,7 +229,7 @@ object R2D {
   }
 
   private fun applyPropsActor(props: UiState, actor: Actor): Actor {
-    actor.name = props["name"] as String? ?: null
+    actor.name = props["name"] as String?
     return actor
   }
 
