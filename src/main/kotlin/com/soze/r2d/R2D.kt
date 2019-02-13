@@ -12,6 +12,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.badlogic.gdx.utils.DelayedRemovalArray
 import com.soze.r2d.DefaultCursor
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.lang.IllegalStateException
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -29,23 +31,23 @@ fun com.badlogic.gdx.scenes.scene2d.ui.Table.lastCell(): Cell<*>? {
 object R2D {
 
   private var currentVDom: R2DNode = R2DNode("INITIAL")
+  private var LOG: Logger = LoggerFactory.getLogger(R2D::class.java)
 
   private var stateChangeCallback: () -> Unit = fun() {}
 
   fun render(element: Element, group: Group) {
     val time0 = System.nanoTime()
-    println("first render")
+    LOG.debug("First render")
     val focus = group.stage?.keyboardFocus
     R2D.stateChangeCallback = fun() {
-      println("stateChangeCallback called, re-rendering everything!")
+      LOG.debug("stateChangeCallback called, re-rendering everything!")
       render(element, group)
     }
     renderChild(currentVDom, element, group)
 
-    println(group)
     group.stage?.keyboardFocus = focus
     val totalTime = System.nanoTime() - time0
-    println("${TimeUnit.NANOSECONDS.toMillis(totalTime)} ms to render")
+    LOG.debug("${TimeUnit.NANOSECONDS.toMillis(totalTime)} ms to render")
   }
 
   private fun renderChild(vdom: R2DNode, element: Element, group: Group) {
@@ -242,7 +244,7 @@ object R2D {
   }
 
   private fun createButton(props: UiState): Actor {
-    println("CREATING NON IMPLEMENTED BUTTON")
+    LOG.warn("CREATING NON IMPLEMENTED BUTTON")
     return Table()
   }
 
