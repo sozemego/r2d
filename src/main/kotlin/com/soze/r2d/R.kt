@@ -2,6 +2,7 @@ package com.soze.lifegame.uibuilder
 
 object R {
 
+	@JvmStatic
 	fun createElement(
 		type: Any,
 		props: UiState = UiState(),

@@ -35,6 +35,7 @@ object R2D {
 
   private var stateChangeCallback: () -> Unit = fun() {}
 
+  @JvmStatic
   fun render(element: Element, group: Group) {
     val time0 = System.nanoTime()
     LOG.debug("First render")
