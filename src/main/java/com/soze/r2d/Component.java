@@ -13,7 +13,7 @@ public abstract class Component {
 
   public void setState(UiState nextState) {
     state.merge(nextState);
-    stateChangeCallback.run();
+    R.getStateUpdater().accept(() -> stateChangeCallback.run());
   }
 
   public UiState getProps() {
