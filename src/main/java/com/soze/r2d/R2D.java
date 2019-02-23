@@ -24,6 +24,7 @@ import java.util.function.Function;
 public class R2D {
 
   private static final Logger LOG = LoggerFactory.getLogger(R2D.class);
+  private static int RENDERS = 0;
 
   private static Runnable stateChangeCallback = () -> {
   };
@@ -33,6 +34,8 @@ public class R2D {
   public static void render(Element element, Group group) {
     long time0 = System.nanoTime();
     LOG.debug("First render");
+    RENDERS++;
+
     Actor focus = null;
     if (group.getStage() != null) {
       focus = group.getStage().getKeyboardFocus();
@@ -47,6 +50,7 @@ public class R2D {
     }
     long totalTime = System.nanoTime() - time0;
     LOG.debug("{} ms to render", TimeUnit.NANOSECONDS.toMillis(totalTime));
+    LOG.debug("Rendered {} times", RENDERS);
   }
 
   private static void renderChild(R2DNode vdom, Element element, Group group) {
