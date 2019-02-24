@@ -7,9 +7,11 @@ import com.badlogic.gdx.scenes.scene2d.Event;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Cell;
+import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,6 +182,12 @@ public class R2D {
       case "BUTTON":
         actor = createButton(props);
         break;
+      case "WINDOW":
+        actor = createWindow(props);
+        break;
+      case "DIALOG":
+        actor = createDialog(props);
+        break;
       default:
         actor = new Table();
     }
@@ -275,6 +283,20 @@ public class R2D {
   private static Actor createButton(UiState props) {
     LOG.warn("CREATING NON IMPLEMENTED BUTTON");
     return new Table();
+  }
+  
+  private static Actor createWindow(UiState props) {
+    LOG.warn("CREATING NON IMPLEMENTED WINDOW");
+    return new Table();
+  }
+  
+  private static Actor createDialog(UiState props) {
+    Window.WindowStyle style = new Window.WindowStyle();
+    style.titleFont = new BitmapFont();
+    style.titleFontColor = Color.WHITE;
+    
+    Dialog dialog = new Dialog(props.get("title", ""), style);
+    return dialog;
   }
 
   private static Component createComponent(Class<Component> clazz, UiState props) {
