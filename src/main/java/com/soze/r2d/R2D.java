@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
+import com.badlogic.gdx.utils.Align;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -221,6 +222,9 @@ public class R2D {
     if (clazz.isAssignableFrom(Label.class)) {
       return applyProps(props, (Label) actor);
     }
+    if (clazz.isAssignableFrom(Dialog.class)) {
+      return applyProps(props, (Dialog) actor);
+    }
     return actor;
   }
 
@@ -274,6 +278,12 @@ public class R2D {
     }
     return label;
   }
+  
+  private static Dialog applyProps(UiState props, Dialog dialog) {
+    dialog.setPosition(props.get("x", 0f), props.get("y", 0f), Align.center);
+    dialog.getTitleLabel().setText(props.get("title", ""));
+    return dialog;
+  }
 
   private static Actor applyPropsActor(UiState props, Actor actor) {
     actor.setName((String) props.get("name"));
@@ -296,7 +306,7 @@ public class R2D {
     style.titleFontColor = Color.WHITE;
     
     Dialog dialog = new Dialog(props.get("title", ""), style);
-    return dialog;
+    return applyProps(props, dialog);
   }
 
   private static Component createComponent(Class<Component> clazz, UiState props) {
