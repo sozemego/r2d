@@ -288,12 +288,14 @@ public class R2D {
   private static Dialog applyProps(UiState props, Dialog dialog) {
     dialog.setPosition(props.get("x", 0f), props.get("y", 0f), Align.center);
     dialog.getTitleLabel().setText(props.get("title", ""));
-    
+  
     return dialog;
   }
 
   private static Actor applyPropsActor(UiState props, Actor actor) {
     actor.setName((String) props.get("name"));
+    actor.setDebug(props.get("debug", false));
+    
     return actor;
   }
 
