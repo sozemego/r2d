@@ -75,9 +75,15 @@ public class R2D {
 
   private static void renderStringType(R2DNode vdom, Element element, Group group, boolean differentType) {
     UiState props = element.getProps();
+    boolean show = props.get("show", true);
     Actor actor = getActor(vdom, element, differentType);
+    if (!show) {
+      group.removeActor(actor);
+      return;
+    }
+    
     vdom.setActor(actor);
-
+    
     if (group instanceof Table) {
       Table table = (Table) group;
       boolean row = props.get("row", false);
@@ -282,6 +288,7 @@ public class R2D {
   private static Dialog applyProps(UiState props, Dialog dialog) {
     dialog.setPosition(props.get("x", 0f), props.get("y", 0f), Align.center);
     dialog.getTitleLabel().setText(props.get("title", ""));
+    
     return dialog;
   }
 
