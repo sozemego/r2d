@@ -323,7 +323,18 @@ public class R2D {
     style.titleFont = new BitmapFont();
     style.titleFontColor = Color.WHITE;
     
-    Dialog dialog = new Dialog(props.get("title", ""), style);
+    Dialog dialog = new Dialog(props.get("title", ""), style) {
+      @Override
+      public float getPrefHeight() {
+        return props.get("height", 50f);
+      }
+      
+      @Override
+      public float getPrefWidth() {
+        return props.get("width", 500f);
+      }
+      
+    };
     return applyProps(props, dialog);
   }
 
