@@ -1,7 +1,9 @@
 package com.soze.r2d;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Event;
 import com.badlogic.gdx.scenes.scene2d.Group;
@@ -149,6 +151,8 @@ public class R2D {
   private static void renderComponentType(R2DNode vdom, Element element, Group group, boolean differentType) {
     Component component = getComponent(vdom, element, differentType);
     component.setStateChangeCallback(R2D.stateChangeCallback);
+    component.getProps().clear();
+    component.getProps().merge(element.getProps());
     Element nextElement = component.render();
     vdom.setComponent(component);
     R2DNode nextVdom = getNextVdomComponent(vdom, nextElement, differentType);
@@ -286,7 +290,12 @@ public class R2D {
   }
   
   private static Dialog applyProps(UiState props, Dialog dialog) {
-    dialog.setPosition(props.get("x", 0f), props.get("y", 0f), Align.center);
+    dialog.pack();
+    Vector2 position = props.get(
+      "position",
+      new Vector2(Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 2)
+    );
+    dialog.setPosition(position.x, position.y, Align.center);
     dialog.getTitleLabel().setText(props.get("title", ""));
   
     return dialog;
