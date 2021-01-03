@@ -3,7 +3,7 @@ R2D
 
 This project aims to create React-like experience for creating user interfaces
 in Scene 2D. It's developed to use together with LibGDX game engine, but that can later change.
-This project is in its infancy, don't expect it to work fully.
+This project is in its infancy, don't expect it to work fully (ever).
 
 Example usage
 ---
